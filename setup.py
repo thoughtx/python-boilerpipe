@@ -8,8 +8,8 @@ try:
 except:
     from urllib.request import urlretrieve
 
-__version__ = '1.2.0.0'
-boilerpipe_version = '1.2.0'
+__version__ = '1.2.3.0'
+boilerpipe_version = '1.2.3'
 DATAPATH = join(abspath(dirname((__file__))), 'src/boilerpipe/data')
 
 
@@ -24,7 +24,7 @@ def download_jars(datapath, version=boilerpipe_version):
             continue
         tar.extract(tarinfo, datapath)
 
-download_jars(datapath=DATAPATH)
+#download_jars(datapath=DATAPATH)
 
 setup(
     name='boilerpipe',
@@ -33,8 +33,7 @@ setup(
     package_dir={'': 'src'},
     package_data={
         'boilerpipe': [
-            'data/boilerpipe-{version}/boilerpipe-{version}.jar'.format(version=boilerpipe_version),
-            'data/boilerpipe-{version}/lib/*.jar'.format(version=boilerpipe_version),
+            'data/*.jar',
         ],
     },
     install_requires=[

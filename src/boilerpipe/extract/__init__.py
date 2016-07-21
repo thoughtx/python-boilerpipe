@@ -11,6 +11,8 @@ InputSource        = jpype.JClass('org.xml.sax.InputSource')
 StringReader       = jpype.JClass('java.io.StringReader')
 HTMLHighlighter    = jpype.JClass('de.l3s.boilerpipe.sax.HTMLHighlighter')
 BoilerpipeSAXInput = jpype.JClass('de.l3s.boilerpipe.sax.BoilerpipeSAXInput')
+YoutbeVideo        = jpype.JClass('de.l3s.boilerpipe.document.YoutubeVideo')
+VimeoVideo         = jpype.JClass('de.l3s.boilerpipe.document.VimeoVideo')
 
 class Extractor(object):
     """
@@ -29,7 +31,7 @@ class Extractor(object):
     source    = None
     data      = None
     headers   = {'User-Agent': 'Mozilla/5.0'}
-    
+
     def __init__(self, extractor='DefaultExtractor', **kwargs):
         if kwargs.get('url'):
             request     = urllib2.Request(kwargs['url'], headers=self.headers)
@@ -52,23 +54,23 @@ class Extractor(object):
                 if jpype.isThreadAttachedToJVM() == False:
                     jpype.attachThreadToJVM()
             lock.acquire()
-            
+
             self.extractor = jpype.JClass(
                 "de.l3s.boilerpipe.extractors."+extractor).INSTANCE
         finally:
             lock.release()
-    
+
         reader = StringReader(self.data)
         self.source = BoilerpipeSAXInput(InputSource(reader)).getTextDocument()
         self.extractor.process(self.source)
-    
+
     def getText(self):
         return self.source.getContent()
-    
+
     def getHTML(self):
         highlighter = HTMLHighlighter.newExtractingInstance()
         return highlighter.process(self.source, self.data)
-    
+
     def getImages(self):
         extractor = jpype.JClass(
             "de.l3s.boilerpipe.sax.ImageExtractor").INSTANCE
@@ -84,3 +86,24 @@ class Extractor(object):
             } for image in images
         ]
         return images
+
+    def getVideos(self):
+        extractor = jpype.JClass(
+            "de.l3s.boilerpipe.sax.MediaExtractor").INSTANCE
+        videos = extractor.process(self.source, self.data)
+        videos = [
+            {
+                'src': video.getEmbedUrl()
+            } for video in videos if type(video) is YoutbeVideo or type(video) is VimeoVideo
+        ]
+        return videos
+
+    def getOpenGraph(self):
+        extractor = jpype.JClass(
+            "de.l3s.boilerpipe.sax.OpenGraphExtractor").INSTANCE
+        OpenGraphTags = extractor.process(self.source, self.data)
+        OpenGraphTags = {key: OpenGraphTags[key] for key in OpenGraphTags}
+        return OpenGraphTags
+
+    def getTextDocument(self):
+        return self.source
